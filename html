@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Active Travel BMI Tracker</title>
+    <link rel="stylesheet" href="style.css?v=9.0">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Active Travel BMI Tracker</h1>
+            <p class="tagline">Calculate how your daily commute impacts your health.</p>
+        </header>
+
+        <main>
+            <!-- 1. Profile Section -->
+            <section class="card">
+                <h3>1. Your Profile</h3>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Weight (kg)</label>
+                        <input type="number" id="weight" value="75" min="25.4" max="317.5" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label>Height (cm)</label>
+                        <input type="number" id="height" value="175" min="139.7" max="243.8" step="0.1">
+                    </div>
+                </div>
+                
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Days of commute per week</label>
+                        <select id="days">
+                            <option value="1">1 Day</option>
+                            <option value="2">2 Days</option>
+                            <option value="3">3 Days</option>
+                            <option value="4">4 Days</option>
+                            <option value="5" selected>5 Days</option>
+                            <option value="6">6 Days</option>
+                            <option value="7">7 Days</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Projection Period: <span id="monthVal">1</span> Month(s)</label>
+                        <input type="range" id="months" min="1" max="12" value="1" oninput="document.getElementById('monthVal').innerText = this.value">
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. Outward Journey -->
+            <section class="card">
+                <h3>2. Outward Journey</h3>
+                <p class="instruction">Select your travel mode and durations in minutes below</p>
+                <div id="outward-legs" class="legs-list">
+                    <div class="leg-item">
+                        <select class="leg-activity">
+                            <option value="3.5">Walking (Brisk)</option>
+                            <option value="6.8" selected>Cycling</option>
+                            <option value="3.0">E-Bike</option>
+                            <option value="1.5">Public Transport</option>
+                        </select>
+                        <input type="number" class="leg-duration" value="20" placeholder="Mins">
+                    </div>
+                </div>
+                <button class="btn-add" onclick="addLeg('outward-legs')">+ Add Leg</button>
+                
+                <div class="return-toggle-box">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="sameReturn" checked onchange="toggleReturn()">
+                        Return journey is the same
+                    </label>
+                </div>
+            </section>
+
+            <!-- 3. Return Journey (Hidden if same) -->
+            <section id="returnSection" class="card hidden">
+                <h3>3. Return Journey</h3>
+                <p class="instruction">Select your travel mode and durations in minutes below</p>
+                <div id="return-legs" class="legs-list">
+                    <div class="leg-item">
+                        <select class="leg-activity">
+                            <option value="3.5">Walking (Brisk)</option>
+                            <option value="6.8">Cycling</option>
+                            <option value="3.0">E-Bike</option>
+                            <option value="1.5">Public Transport</option>
+                        </select>
+                        <input type="number" class="leg-duration" value="20" placeholder="Mins">
+                    </div>
+                </div>
+                <button class="btn-add" onclick="addLeg('return-legs')">+ Add Leg</button>
+            </section>
+
+            <button id="calcBtn" class="btn-primary">Calculate Projection</button>
+
+            <!-- Results Section -->
+            <section id="results" class="results-container hidden">
+                <h2 id="resultsHeader">1-Month Projection</h2>
+                
+                <div class="results-grid">
+                    <div class="result-box">
+                        <span class="label">Kcal Burned</span>
+                        <div class="value" id="calOut">0</div>
+                    </div>
+                    <div class="result-box">
+                        <span class="label">Fat Lost (kg)</span>
+                        <div class="value" id="weightOut">0</div>
+                    </div>
+                </div>
+
+                <div class="visualizer">
+                    <p class="bmi-summary">BMI Change: <span id="oldBMIText">0</span> → <strong id="newBMIText">0</strong></p>
+                    
+                    <div class="legend">
+                        <span><i class="dot u"></i> Underweight</span>
+                        <span><i class="dot h"></i> Healthy</span>
+                        <span><i class="dot w"></i> Overweight</span>
+                        <span><i class="dot o"></i> Obese</span>
+                    </div>
+
+                    <div class="scale-container">
+                        <!-- OLD Marker (Top) -->
+                        <div id="marker-old" class="marker marker-top">Old<br><span>▼</span></div>
+                        
+                        <!-- THE BAR (Asian-Pacific Thresholds) -->
+                        <div class="bmi-bar">
+                            <div class="seg u" style="width: 14%;"></div> <!-- 15-18.5 -->
+                            <div class="seg h" style="width: 18%;"></div> <!-- 18.5-23 -->
+                            <div class="seg w" style="width: 18%;"></div> <!-- 23-27.5 -->
+                            <div class="seg o" style="flex-grow: 1;"></div> <!-- 27.5-40 -->
+                        </div>
+
+                        <!-- NEW Marker (Bottom) -->
+                        <div id="marker-new" class="marker marker-bottom"><span>▲</span><br>New</div>
+
+                        <!-- Transition Labels -->
+                        <div class="scale-labels">
+                            <span style="left: 14%;">18.5</span>
+                            <span style="left: 32%;">23</span>
+                            <span style="left: 50%;">27.5</span>
+                        </div>
+                    </div>
+                </div>
+
+                <p id="insight" class="fun-fact"></p>
+            </section>
+
+            <button class="btn-text" onclick="document.getElementById('methodology').classList.toggle('hidden')">how is this calculate</button>
+            <div id="methodology" class="methodology-card hidden">
+                <h4>Methodology</h4>
+                <p><strong>Calorie Burn:</strong> Calculated using the Metabolic Equivalent of Task (MET) formula: <code>(MET - 1) * 0.0175 * Weight * Duration</code>. We subtract 1 MET to represent the additional energy burned over resting levels.</p>
+                <p><strong>Weight Loss:</strong> Based on the scientific calculation that a deficit of 7,700 kcal results in approximately 1kg of fat loss.</p>
+                <p><strong>Important Assumption:</strong> This tool assumes all other lifestyle factors remain identical, including your <strong>baseline physical activity</strong> and <strong>daily calorie intake</strong>.</p>
+            </div>
+        </main>
+    </div>
+    <script src="script.js?v=9.0"></script>
+</body>
+</html>
